@@ -1,40 +1,45 @@
 <template>
-  <div>
+  <div class="container mt-4">
     <div>
       <Form :validation-schema="validationSchema" :validate-on-mount="false" :validateOnChange="true">
-        <!-- Поля для введення імені та прізвища -->
-        <Field id="first_name" type="text" name="first_name" placeholder="First Name" v-model="form.first_name" />
-        <ErrorMessage name="first_name" class="error" />
+        <div class="form-group">
+          <label for="first_name">First Name</label>
+          <Field  type="text" name="first_name" class="form-control" placeholder="First Name" v-model="form.first_name" />
+          <ErrorMessage name="first_name" class="text-danger" />
+        </div>
 
-        <Field id="last_name" type="text" name="last_name" placeholder="Last Name" v-model="form.last_name" />
-        <ErrorMessage name="last_name" class="error" />
+        <div class="form-group">
+          <label for="last_name">Last Name</label>
+          <Field id="last_name" type="text" name="last_name" class="form-control" placeholder="Last Name" v-model="form.last_name" />
+          <ErrorMessage name="last_name" class="text-danger" />
+        </div>
 
-        <!-- Поля для введення телефонів -->
-        <div v-for="(phone, index) in form.phone_numbers" :key="index" style="margin-bottom: 10px;">
+        <div v-for="(phone, index) in form.phone_numbers" :key="index" class="form-group">
           <input
               v-model="form.phone_numbers[index]"
-              @input="checkPhoneExists(index)"
+              @input="checkPhoneExists(index, $event.target.value)"
+              class="form-control"
               placeholder="Phone Number"
-              style="width: 200px;"
           />
-          <ErrorMessage name="phone_numbers" class="error" />
-          <button @click="addPhone" v-if="index === form.phone_numbers.length - 1">+</button>
-          <button @click="removePhone(index)" v-if="form.phone_numbers.length > 1">Remove</button>
-          <p v-if="phoneErrors[index]">This phone number already exists in the database.</p>
+          <ErrorMessage name="phone_numbers" class="text-danger" />
+          <button type="button" class="btn btn-secondary mt-2" @click="addPhone" v-if="index === form.phone_numbers.length - 1">+</button>
+          <button type="button" class="btn btn-danger mt-2" @click="removePhone(index)" v-if="form.phone_numbers.length > 1">Remove</button>
+          <p v-if="phoneErrors[index]" class="text-danger">This phone number already exists in the database.</p>
         </div>
 
         <div>
-          <button v-if="!form.id" @click="submitForm" :disabled="hasPhoneErrors">Submit</button>
-          <button v-else @click="updateContact" :disabled="hasPhoneErrors">Update Contact</button>
+          <button class="btn btn-primary" v-if="!form.id" @click.prevent="submitForm" :disabled="hasPhoneErrors">Submit</button>
+          <button class="btn btn-warning" v-else @click.prevent="updateContact" :disabled="hasPhoneErrors">Update Contact</button>
+
+
         </div>
       </Form>
     </div>
 
-    <!-- Таблиця з контактами -->
-    <div class="contacts-table">
+    <div class="contacts-table mt-4">
       <h1>Contacts</h1>
-      <table v-if="contacts.length > 0">
-        <thead>
+      <table class="table table-bordered" v-if="contacts.length > 0">
+        <thead class="thead-light">
         <tr>
           <th>First Name</th>
           <th>Last Name</th>
@@ -48,27 +53,26 @@
           <td>{{ contact.last_name || 'N/A' }}</td>
           <td>
             <ul>
-              <li v-for="phone in contact.phone_numbers" :key="phone.id">
+              <li v-for="phone in contact.phone_numbers" :key="phone.id" class="phone-list">
                 {{ phone.phone_number || 'N/A' }}
               </li>
             </ul>
           </td>
           <td>
-            <button @click="editContact(contact)">Edit</button>
-            <button @click="deleteContact(contact.id)">Delete</button>
+            <button class="btn btn-info" @click="editContact(contact)">Edit</button>
+            <button class="btn btn-danger" @click="deleteContact(contact.id)">Delete</button>
           </td>
         </tr>
         </tbody>
       </table>
       <p v-else>No contacts available</p>
 
-      <!-- Пагінація -->
       <div class="pagination" v-if="pagination.total > pagination.per_page">
-        <button @click="fetchContacts(pagination.current_page - 1)" :disabled="!pagination.prev_page_url">
+        <button class="btn btn-secondary" @click="fetchContacts(pagination.current_page - 1)" :disabled="!pagination.prev_page_url">
           &laquo; Previous
         </button>
         <span>Page {{ pagination.current_page }} of {{ pagination.last_page }}</span>
-        <button @click="fetchContacts(pagination.current_page + 1)" :disabled="!pagination.next_page_url">
+        <button class="btn btn-secondary" @click="fetchContacts(pagination.current_page + 1)" :disabled="!pagination.next_page_url">
           Next &raquo;
         </button>
       </div>
@@ -93,7 +97,7 @@ export default {
         total: 0,
         per_page: 5,
         prev_page_url: null,
-        next_page_url: null
+        next_page_url: null,
       },
       form: {
         id: null,
@@ -148,11 +152,15 @@ export default {
       }
     },
     async checkPhoneExists(index) {
-      const phone = this.form.phone_numbers[index];
+      if (!this.form.phone_numbers[index]) return;
+
       try {
-        const response = await fetch(`http://localhost:8000/api/check-phone?phone=${phone}`);
+        const response = await fetch(`http://localhost:8000/api/check-phone?phone=${this.form.phone_numbers[index]}`);
         const result = await response.json();
+
+
         this.phoneErrors[index] = result.exists;
+
         this.hasPhoneErrors = this.phoneErrors.includes(true);
       } catch (error) {
         console.error('Error checking phone:', error);
@@ -177,7 +185,9 @@ export default {
           const result = await response.json();
           console.log('Form submitted:', result);
           this.resetForm();
-          this.fetchContacts();
+
+          window.location.reload();
+          //await this.fetchContacts();
         } else {
           const errorDetails = await response.json();
           console.error('Error response:', errorDetails);
@@ -192,19 +202,21 @@ export default {
         const response = await fetch(url, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             first_name: this.form.first_name,
             last_name: this.form.last_name,
-            phone_number: this.form.phone_numbers
-          })
+            phone_number: [...this.form.phone_numbers],
+          }),
         });
 
         if (response.ok) {
           console.log('Contact updated successfully');
-          this.fetchContacts(); // Перезавантажуємо список контактів після успішного оновлення
+          await this.fetchContacts();
           this.resetForm();
+
+          window.location.reload();
         } else {
           const errorDetails = await response.json();
           console.error('Error updating contact:', errorDetails);
@@ -220,7 +232,7 @@ export default {
         });
         if (response.ok) {
           console.log('Contact deleted');
-          this.fetchContacts();
+          await this.fetchContacts();
         } else {
           const errorDetails = await response.json();
           console.error('Error deleting contact:', errorDetails);
@@ -266,5 +278,9 @@ button {
 .error {
   color: red;
   font-size: 12px;
+}
+.phone-list {
+
+  white-space: nowrap;
 }
 </style>
