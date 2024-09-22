@@ -109,7 +109,7 @@ export default {
     const validationSchema = toTypedSchema(z.object({
       first_name: z.string().min(2, "This is required"),
       last_name: z.string().min(2, "This is required"),
-      phone_numbers: z.array(z.string().min(1, "This is required"))
+
     }));
 
     return { validationSchema };
