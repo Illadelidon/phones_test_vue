@@ -109,6 +109,7 @@ export default {
     const validationSchema = toTypedSchema(z.object({
       first_name: z.string().min(2, "This is required"),
       last_name: z.string().min(2, "This is required"),
+      phone_numbers: z.array(z.string().min(1, "This is required"))
     }));
 
     return { validationSchema };
@@ -175,7 +176,7 @@ export default {
         if (response.ok) {
           const result = await response.json();
           console.log('Form submitted:', result);
-          //this.resetForm();
+          this.resetForm();
           this.fetchContacts();
         } else {
           const errorDetails = await response.json();
@@ -195,13 +196,15 @@ export default {
           },
           body: JSON.stringify({
             first_name: this.form.first_name,
-            last_name: this.form.last_name
+            last_name: this.form.last_name,
+            phone_number: this.form.phone_numbers
           })
         });
 
         if (response.ok) {
           console.log('Contact updated successfully');
-          this.updatePhoneNumbers(); // Викликаємо оновлення телефонів після успішного оновлення імені
+          this.fetchContacts(); // Перезавантажуємо список контактів після успішного оновлення
+          this.resetForm();
         } else {
           const errorDetails = await response.json();
           console.error('Error updating contact:', errorDetails);
@@ -210,60 +213,6 @@ export default {
         console.error('Error:', error);
       }
     },
-    async updatePhoneNumbers() {
-      const url = `http://localhost:8000/api/contacts/${this.form.id}/phones`;
-      try {
-        const response = await fetch(url, {
-          method: 'PUT', // або 'POST', якщо створюєш нові номери
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            phone_number: this.form.phone_numbers
-          })
-        });
-
-        if (response.ok) {
-          console.log('Phone numbers updated successfully');
-          this.fetchContacts(); // Після успішного оновлення перезавантажуємо список контактів
-        } else {
-          const errorDetails = await response.json();
-          console.error('Error updating phone numbers:', errorDetails);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    },
-    /*async updateForm() {
-      const url = `http://localhost:8000/api/contacts/${this.form.id}`;
-      try {
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-
-            id: this.form.id,
-            first_name: this.form.first_name,
-            last_name: this.form.last_name,
-            phone_numbers: this.form.phone_numbers
-          })
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          console.log('Form updated:', result);
-          this.resetForm();
-          this.fetchContacts();
-        } else {
-          const errorDetails = await response.json();
-          console.error('Error response:', errorDetails);
-        }
-      } catch (error) {
-        console.error('Error updating form:', error);
-      }
-    },*/
     async deleteContact(id) {
       try {
         const response = await fetch(`http://localhost:8000/api/contacts/${id}`, {
@@ -294,6 +243,8 @@ export default {
         last_name: '',
         phone_numbers: ['']
       };
+      this.phoneErrors = [];
+      this.hasPhoneErrors = false;
     },
   }
 };
