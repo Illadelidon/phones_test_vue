@@ -4,7 +4,7 @@
       <Form :validation-schema="validationSchema" :validate-on-mount="false" :validateOnChange="true">
         <div class="form-group">
           <label for="first_name">First Name</label>
-          <Field  type="text" name="first_name" class="form-control" placeholder="First Name" v-model="form.first_name" />
+          <Field type="text" name="first_name" class="form-control" placeholder="First Name" v-model="form.first_name" />
           <ErrorMessage name="first_name" class="text-danger" />
         </div>
 
@@ -30,15 +30,13 @@
         <div>
           <button class="btn btn-primary" v-if="!form.id" @click.prevent="submitForm" :disabled="hasPhoneErrors">Submit</button>
           <button class="btn btn-warning" v-else @click.prevent="updateContact" :disabled="hasPhoneErrors">Update Contact</button>
-
-
         </div>
       </Form>
     </div>
 
     <div class="contacts-table mt-4">
       <h1>Contacts</h1>
-      <table class="table table-bordered" v-if="contacts.length > 0">
+      <table class="table table-bordered table-responsive" v-if="contacts.length > 0">
         <thead class="thead-light">
         <tr>
           <th>First Name</th>
@@ -282,5 +280,10 @@ button {
 .phone-list {
 
   white-space: nowrap;
+}
+@media (max-width: 576px) {
+  .phone-list {
+    font-size: 0.9rem;
+  }
 }
 </style>
